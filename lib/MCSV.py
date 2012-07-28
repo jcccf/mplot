@@ -34,3 +34,12 @@ def read_at_indices(filename, *indices):
 
 if __name__ == '__main__':
   print read_at_indices("test.txt", 1)
+
+def parse_dictionary(filename):
+  results = {}
+  with open(filename, 'r') as f:
+    for l in f:
+      for kv in l.split(", "):
+        for k, v in kv.split("="):
+          results.setdefault(k, []).append(try_number(v))
+  return results
