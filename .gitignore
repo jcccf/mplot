@@ -2,3 +2,4 @@
 *.png
 *.txt
 *.DS_Store
+data/*
