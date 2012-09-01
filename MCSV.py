@@ -82,6 +82,19 @@ def parse_piggy(filename):
     cumulativehistpairs = cumulativehist.split("),(")
     return frequencypairs
     
+def parse_ranklist(filename, limit=None):
+  counts = []
+  with open(filename, 'r') as f:
+    if limit is not None:
+      for i, l in enumerate(f):
+        counts.append(int(l.strip().split("\t")[1]))
+        if i > limit: break
+    else:
+      for i, l in enumerate(f):
+        counts.append(int(l.strip().split("\t")[1]))
+  return counts
 
 if __name__ == '__main__':
-  parse_piggy('data/all_accs_dist_20120807/part-r-00000')
+  pass
+  # parse_piggy('data/all_accs_dist_20120807/part-r-00000')
+  # print parse_ranklist('data/all_accs_20120829/part-r-00000')
