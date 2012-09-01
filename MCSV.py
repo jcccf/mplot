@@ -81,18 +81,6 @@ def parse_piggy(filename):
     frequencypairs = [tuple(pair.split(",")) for pair in frequencies.split("),(")]
     cumulativehistpairs = cumulativehist.split("),(")
     return frequencypairs
-    
-def parse_ranklist(filename, limit=None):
-  counts = []
-  with open(filename, 'r') as f:
-    if limit is not None:
-      for i, l in enumerate(f):
-        counts.append(int(l.strip().split("\t")[1]))
-        if i > limit: break
-    else:
-      for i, l in enumerate(f):
-        counts.append(int(l.strip().split("\t")[1]))
-  return counts
 
 if __name__ == '__main__':
   pass
