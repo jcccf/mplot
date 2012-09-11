@@ -70,6 +70,23 @@ def plot_cache_metrics(name):
   # Cumulative miss rate
   mplot.one.p('plots/%s/miss_rate_cum' % name, ne[2], title='Cumulative miss rate', sliding=1000)
 
+def percentage_accesses(filename = 'data/all_accs_dist_20120829/part-r-00000', divisor=2):
+  freqpairs = MCSV.parse_piggy('data/all_accs_dist_20120829/part-r-00000')
+  freqpairs = [(int(a), int(b)) for a, b in freqpairs]
+  total_accesses = sum([a * b for a, b in freqpairs])
+  total_users = sum([b for a, b in freqpairs])
+  # print total_accesses, total_users
+  freqpairs_sorted = sorted(freqpairs, key=lambda x: x[0], reverse=True)
+
+  user_count = 0
+  i, accesses = 0, 0
+  while user_count < total_users / divisor:
+    a, b = freqpairs_sorted[i]
+    accesses += a * b
+    user_count += b
+    i += 1
+  print "Frac. of top users, Frac. of accesses", ((user_count - 0.0) / total_users), ((accesses - 0.0) / total_accesses)
+
 if __name__ == "__main__":
   # # Comparing PTC across cache sizes
   # plot_comparison_metrics("ptc_lru_2b10m", "ptc_lru_4b20m")
@@ -103,11 +120,71 @@ if __name__ == "__main__":
   # counts2 = dicty2['count']
   # mplot.two.scales('plots/test', [times, counts], [times2, counts2], title='PTC Count over time', labels=['PTC Count', 'Disk Read Count'], sliding=1000)
 
-  # freqpairs = MCSV.parse_piggy('data/all_accs_dist_20120807/part-r-00000')
-  # mplot.one.loglog('plots/freqpairs', freqpairs, xlabel='Access Count', ylabel='Frequency')
+  # freqpairs = MCSV.parse_piggy('data/all_accs_dist_20120829/part-r-00000')
+  # mplot.one.loglog('plots/freqpairs0829', freqpairs, xlabel='Access Count', ylabel='Frequency')
+  
+  # ranklist = MCSV.read_at_indices_limit('data/all_accs_20120829/part-r-00000', 0, 1000000, 1)[1]
+  # mplot.one.loglog('plots/ranklist', ranklist, xlabel='Rank', ylabel='Access Count')
 
-  prac = MCSV.read_at_indices_limit('data/all_users_pagerank_20120821/part-r-00000', 10000, 20000, 1, 3)
-  mplot.two.scales('plots/pagerank_accesses_10k_20k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
-  prac = MCSV.read_at_indices_limit('data/all_users_pagerank_20120821/part-r-00000', 0, 10000, 1, 3)
-  mplot.two.scales('plots/pagerank_accesses_0k_10k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
+  # prac = MCSV.read_at_indices_limit('data/pagerank_accesses_by_pr_20120829/part-r-00000', 10000, 20000, 1, 3)
+  # mplot.two.scales('plots/pagerank_accesses_10k_20k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
+  # prac = MCSV.read_at_indices_limit('data/pagerank_accesses_by_pr_20120829/part-r-00000', 0, 10000, 1, 3)
+  # mplot.two.scales('plots/pagerank_accesses_0k_10k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
+  # prac = MCSV.read_at_indices_limit('data/pagerank_accesses_by_pr_20120829/part-r-00000', 100000, 110000, 1, 3)
+  # mplot.two.scales('plots/pagerank_accesses_100k_110k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
+  prac = MCSV.read_at_indices_limit('data/pagerank_accesses_by_pr_20120829/part-r-00000', 0, 100000, 1, 3)
+  mplot.two.scales('plots/pagerank_accesses_0k_100k.eps', [x / 10000000.0 for x in prac[1]], [x * 100000.0 for x in prac[3]], labels=['Accesses $(10^7)$', 'PageRank $(10^{-5})$'], xlabel='Rank', sliding=1000)
 
+  # percentage_accesses(divisor = 100000)
+  # percentage_accesses(divisor = 10000)
+  # percentage_accesses(divisor = 1000)
+  # percentage_accesses(divisor = 100)
+  # percentage_accesses(divisor = 2)
+
+  throughput_threads = {}
+  missrate_cachesize = {}
+  throughput_threads_disk = {}
+  throughput_missrate = {}
+  import csv
+  with open('data/Magic Caches - Table of Results - Statistics.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+      if row['Disk Type'] == 'mem' and row['PAC1000'] != '' and int(row['Threads']) <= 8:
+        disk_type = row['Disk Type']
+        throughput = int(float(row['PAC1000'].replace(",", "")))
+        threads = int(row['Threads'])
+        throughput_threads_disk.setdefault(disk_type, []).append((threads, throughput))
+      if row['PAC1000'] != '' and row['Size %'] != '':
+        machine = row['Machine']
+        cache_type = row['Algorithm']
+        disk_type = row['Disk Type']
+        cache_size = float(row['Size %'])
+        throughput = int(float(row['PAC1000'].replace(",", "")))
+        threads = int(row['Threads'])
+        
+        if cache_size == 50.0 and disk_type == 'ssd':
+          throughput_threads.setdefault(cache_type, []).append((threads, throughput))
+        if cache_size == 50.0 and cache_type == 'clock':
+          throughput_threads_disk.setdefault(disk_type, []).append((threads, throughput))
+        
+        # Uses Miss Rate
+        if row['M1m'] != '' and row['M1m'] != "-":
+          miss_rate = float(row['M1m'].replace("%", ""))
+          if cache_type == 'clock' and disk_type == 'ssd':
+            throughput_missrate.setdefault(str(threads), []).append((miss_rate, throughput))
+          missrate_cachesize.setdefault(cache_type, {})[cache_size] = miss_rate
+
+  tt = zip(*sorted(throughput_threads.iteritems()))
+  mplot.many.pin('plots/throughput_threads_cachetype.eps', tt[1], labels=tt[0],
+    xlabel='# of Threads', ylabel='Throughput', average=False)
+  ttd = zip(*sorted(throughput_threads_disk.iteritems()))
+  mplot.many.pin('plots/throughput_threads_disk.eps', ttd[1], labels=ttd[0],
+    xlabel='# of Threads', ylabel='Throughput', average=False)
+  tm = zip(*sorted(throughput_missrate.iteritems()))
+  mplot.many.pin('plots/throughput_missrate.eps', tm[1], labels=tm[0],
+    xlabel='Miss Rate (%)', ylabel='Throughput', average=False)
+
+  missrate_cachesize
+
+  mplot.many.pin('plots/missrate_cachesize_cachetype.eps', missrate_cachesize.values(), labels=missrate_cachesize.keys(),
+    xlabel='Cache Size (%)', ylabel='Miss Rate (%)', average=False)
