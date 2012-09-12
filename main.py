@@ -132,8 +132,17 @@ if __name__ == "__main__":
   # mplot.two.scales('plots/pagerank_accesses_0k_10k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
   # prac = MCSV.read_at_indices_limit('data/pagerank_accesses_by_pr_20120829/part-r-00000', 100000, 110000, 1, 3)
   # mplot.two.scales('plots/pagerank_accesses_100k_110k', prac[1], prac[3], labels=['Accesses', 'PageRank'], sliding=1000)
-  prac = MCSV.read_at_indices_limit('data/pagerank_accesses_by_pr_20120829/part-r-00000', 0, 100000, 1, 3)
-  mplot.two.scales('plots/pagerank_accesses_0k_100k.eps', [x / 10000000.0 for x in prac[1]], [x * 100000.0 for x in prac[3]], labels=['Accesses $(10^7)$', 'PageRank $(10^{-5})$'], xlabel='Rank', sliding=1000)
+
+  # mplot.many.scales3('plots/test.eps', [(1,2), (2,4)], [(1,4), (2,5)], [(1,6), (2,5)])
+
+  # raise Exception()
+
+  prac = MCSV.read_at_indices_limit('data/pagerank_accesses_deg_by_pr_20120829/part-r-00000', 0, 1000000, 1, 3, 5)
+  mplot.many.scales3('plots/pagerank_accesses_deg_0k_1m.eps', [x / 10000000.0 for x in prac[1]], [x * 100000.0 for x in prac[3]], [x / 1000 for x in prac[5]], labels=['Accesses $(10^7)$', 'PageRank $(10^{-5})$', 'Degree $(10^3)$'], xlabel='Rank', sliding=1000)
+  prac = MCSV.read_at_indices_limit('data/pagerank_accesses_deg_by_pr_20120829/part-r-00000', 0, 100000, 1, 3, 5)
+  mplot.many.scales3('plots/pagerank_accesses_deg_0k_100k.eps', [x / 10000000.0 for x in prac[1]], [x * 100000.0 for x in prac[3]], [x / 1000 for x in prac[5]], labels=['Accesses $(10^7)$', 'PageRank $(10^{-5})$', 'Degree $(10^3)$'], xlabel='Rank', sliding=1000)
+  prac = MCSV.read_at_indices_limit('data/pagerank_accesses_deg_by_pr_20120829/part-r-00000', 0, 10000, 1, 3, 5)
+  mplot.many.scales3('plots/pagerank_accesses_deg_0k_10k.eps', [x / 10000000.0 for x in prac[1]], [x * 100000.0 for x in prac[3]], [x / 1000 for x in prac[5]], labels=['Accesses $(10^7)$', 'PageRank $(10^{-5})$', 'Degree $(10^3)$'], xlabel='Rank', sliding=1000)
 
   # percentage_accesses(divisor = 100000)
   # percentage_accesses(divisor = 10000)
@@ -183,8 +192,6 @@ if __name__ == "__main__":
   tm = zip(*sorted(throughput_missrate.iteritems()))
   mplot.many.pin('plots/throughput_missrate.eps', tm[1], labels=tm[0],
     xlabel='Miss Rate (%)', ylabel='Throughput', average=False)
-
-  missrate_cachesize
 
   mplot.many.pin('plots/missrate_cachesize_cachetype.eps', missrate_cachesize.values(), labels=missrate_cachesize.keys(),
     xlabel='Cache Size (%)', ylabel='Miss Rate (%)', average=False)
